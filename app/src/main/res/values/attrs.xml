@@ -16,4 +16,28 @@
         <attr name="lrcDividerHeight" format="dimension|reference" />
         <attr name="lrcpadValue" format="dimension|reference" />
     </declare-styleable>
+
+    <declare-styleable name="VirgoDrawableTextView">
+        <attr name="drawableSrc" format="reference"/>
+        <attr name="drawableHeight" format="dimension"/>
+        <attr name="drawableWidth" format="dimension"/>
+        <attr name="drawableLocation">
+            <enum name="left" value="1"/>
+            <enum name="top" value="2"/>
+            <enum name="right" value="3"/>
+            <enum name="bottom" value="4"/>
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="CircleProcessBar">
+        <attr name="cbBackColor" format="color|reference" />
+        <attr name="cbFrontColor" format="color|reference" />
+        <attr name="cbTextColor" format="color|reference" />
+        <attr name="cbTextSize" format="dimension|reference" />
+        <attr name="cbRadius" format="dimension|reference" />
+        <attr name="cbStrokeWidth" format="dimension|reference" />
+        <attr name="cbProcess" format="integer" />
+        <attr name="cbMax" format="integer" />
+        <attr name="cbAddText" format="boolean"/>
+    </declare-styleable>
 </resources>
