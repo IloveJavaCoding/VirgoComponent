@@ -21,4 +21,12 @@
         <item name="android:background">#ffffff</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
+
+    <style name="VirgoPick_Dialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowBackground">@color/colorWhite</item>
+    </style>
 </resources>

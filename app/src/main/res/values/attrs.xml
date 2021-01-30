@@ -40,4 +40,19 @@
         <attr name="cbMax" format="integer" />
         <attr name="cbAddText" format="boolean"/>
     </declare-styleable>
+
+    <declare-styleable name="VirgoPickerView">
+        <attr name="isLoop" format="boolean" />
+        <attr name="mainColor" format="color|reference" />
+        <attr name="secondColor" format="color|reference" />
+    </declare-styleable>
+
+    <declare-styleable name="VirgoImagePlayer">
+        <attr name="dotSize" format="dimension|reference"/>
+        <attr name="dotMargin" format="dimension|reference"/>
+        <attr name="duration" format="integer"/>
+        <attr name="addDot" format="boolean"/>
+        <attr name="dotFocus" format="reference"/>
+        <attr name="dotUnFocus" format="reference"/>
+    </declare-styleable>
 </resources>

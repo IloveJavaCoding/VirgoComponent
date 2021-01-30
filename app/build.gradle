@@ -2,6 +2,7 @@ plugins {
     id 'com.android.library'
 }
 
+def version = "1.1.1"
 android {
     signingConfigs {
         release {
@@ -14,7 +15,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0"
+        versionName version
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,14 +34,14 @@ android {
     android{
         task makeAar(type: Copy) {
             //删除存在的
-            delete 'src/main/libs/VirgoComponent.aar'
+//            delete 'src/main/libs/VirgoComponent.aar'
             //生成jar的文件路径可能会有不同（在build/intermediates下面）
             from('build/outputs/aar')
             //打进jar包后的文件目录
             into('src/main/libs/')
             include('app-release.aar')
             //重命名
-            rename ('app-release.aar', 'VirgoComponent.aar')
+            rename ('app-release.aar', "VirgoComponent_${version}.aar")
         }
 
         makeAar.dependsOn(assemble)
@@ -61,6 +62,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
-    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
     implementation 'org.greenrobot:eventbus:3.1.1'
 }
