@@ -249,13 +249,8 @@ public class VirgoImagePlayer extends RelativeLayout {
         startPlay();
     }
 
-    public void setImages(List<Object> url){
+    public void setImages(List<String> url){
         if(url==null || url.size()<=0){
-            return;
-        }
-
-        if(!(url.get(0) instanceof String || url.get(0) instanceof Bitmap)){
-            Log.e(TAG, "setImages: 不支持格式(string / bitmap)");
             return;
         }
 
@@ -265,9 +260,10 @@ public class VirgoImagePlayer extends RelativeLayout {
 
         if(url.size()==1){
             //仅一张图
-            VirgoRoundImageView VirgoRoundImageView = new VirgoRoundImageView(context);
-            Glide.with(context).load(url.get(0)).into(VirgoRoundImageView);
-            imageViewList.add(VirgoRoundImageView);
+            VirgoRoundImageView imageView = new VirgoRoundImageView(context);
+            imageView.setScaleType(VirgoRoundImageView.ScaleType.CENTER_CROP);
+            Glide.with(context).load(url.get(0)).into(imageView);
+            imageViewList.add(imageView);
         }else{
             //有多张图
             //单个点的布局
@@ -275,7 +271,7 @@ public class VirgoImagePlayer extends RelativeLayout {
             paramsDot.setMargins(dotMargin, dotMargin, dotMargin, dotMargin);
             for(int i=0; i<url.size(); i++){
                 VirgoRoundImageView img = new VirgoRoundImageView(context);
-                img.setScaleType(VirgoRoundImageView.ScaleType.FIT_CENTER);
+                img.setScaleType(VirgoRoundImageView.ScaleType.CENTER_CROP);
                 Glide.with(context).load(url.get(i)).into(img);
                 imageViewList.add(img);
 
