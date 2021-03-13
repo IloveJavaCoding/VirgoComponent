@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.nepalese.virgocomponent.R;
+import com.nepalese.virgocomponent.view.VirgoPickerView;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -90,7 +91,7 @@ public class VirgoTimeSelector {
             selectorDialog = new Dialog(context, R.style.VirgoPick_Dialog);
             selectorDialog.setCancelable(false);
             selectorDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            selectorDialog.setContentView(R.layout.time_selector);//layout of the dialog
+            selectorDialog.setContentView(R.layout.layout_time_selector);//layout of the dialog
 
             //set the width of dialog be same as window and at the bottom
             Window window = selectorDialog.getWindow();

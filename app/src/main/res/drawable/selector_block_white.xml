@@ -6,7 +6,7 @@
             <solid android:color="@color/colorWhite" />
             <stroke
                 android:width="0.5dp"
-                android:color="@color/colorGray_Half" />
+                android:color="@color/colorGray50" />
         </shape>
     </item>
 

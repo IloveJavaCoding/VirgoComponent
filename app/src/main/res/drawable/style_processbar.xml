@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/secondaryProgress">
+        <shape>
+            <corners android:radius="1dp"/>
+            <solid android:color="@color/colorGray50" />
+        </shape>
+    </item>
+
+    <item android:id="@android:id/progress"> <!--进度条颜色-->
+        <clip>
+            <shape>
+                <corners android:radius="1dp"/>
+                <!--0从左到右，90表示从下到上，数值为45的整数倍；-->
+                <solid android:color="@color/colorTY"/>
+            </shape>
+        </clip>
+    </item>
+</layer-list>

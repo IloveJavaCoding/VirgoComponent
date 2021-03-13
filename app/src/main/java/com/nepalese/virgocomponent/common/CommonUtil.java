@@ -17,6 +17,10 @@ public class CommonUtil {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
     }
 
+    public static int getRandomInt(int a, int b) {
+        return (int)(Math.random() * (double)(b - a)) + a;
+    }
+
     public static Boolean isUtf8(File file) {
         boolean isUtf8 = true;
         byte[] buffer = readFile2Bytes(file.getPath());

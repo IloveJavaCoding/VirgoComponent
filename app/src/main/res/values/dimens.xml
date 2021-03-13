@@ -7,7 +7,9 @@
     <dimen name="padding_10">10dp</dimen>
     <dimen name="padding_15">15dp</dimen>
     <dimen name="padding_20">20dp</dimen>
+    <dimen name="padding_30">30dp</dimen>
 
+    <dimen name="margin_1">1dp</dimen>
     <dimen name="margin_3">3dp</dimen>
     <dimen name="margin_5">5dp</dimen>
     <dimen name="margin_10">10dp</dimen>
@@ -16,8 +18,10 @@
     <dimen name="margin_25">25dp</dimen>
     <dimen name="margin_30">30dp</dimen>
     <dimen name="margin_35">35dp</dimen>
+    <dimen name="margin_40">40dp</dimen>
+    <dimen name="margin_50">50dp</dimen>
 
-    <!--text size start-->
+    <!--text size sp-->
     <dimen name="text_size_10">10sp</dimen>
     <dimen name="text_size_12">12sp</dimen>
     <dimen name="text_size_14">14sp</dimen>
@@ -25,15 +29,18 @@
     <dimen name="text_size_18">18sp</dimen>
     <dimen name="text_size_20">20sp</dimen>
     <dimen name="text_size_22">22sp</dimen>
-    <dimen name="text_size_26">26sp</dimen>
+    <dimen name="text_size_24">24sp</dimen>
     <dimen name="text_size_32">32sp</dimen>
     <dimen name="text_size_50">50sp</dimen>
 
     <!--icon,image-->
+    <dimen name="icon_16">16dp</dimen>
     <dimen name="icon_24">24dp</dimen>
+    <dimen name="icon_30">30dp</dimen>
     <dimen name="icon_32">32dp</dimen>
-    <dimen name="icon_35">35dp</dimen>
+    <dimen name="icon_48">48dp</dimen>
     <dimen name="icon_64">64dp</dimen>
+    <dimen name="icon_128">128dp</dimen>
 
     <dimen name="img_50">50dp</dimen>
     <dimen name="img_100">100dp</dimen>

@@ -11,6 +11,7 @@ import android.view.Window;
 import android.widget.TextView;
 
 import com.nepalese.virgocomponent.R;
+import com.nepalese.virgocomponent.view.VirgoPickerView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +19,7 @@ import java.util.List;
 
 /**
  * @author nepalese on 2021/1/11 15:15
- * @usage
+ * @usage 简单地址选择器
  */
 public class VirgoAddressSelector {
     private static final String TAG = "VirgoAddressSelector";
@@ -64,7 +65,7 @@ public class VirgoAddressSelector {
             selectorDialog = new Dialog(context, R.style.VirgoPick_Dialog);
             selectorDialog.setCancelable(false);
             selectorDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            selectorDialog.setContentView(R.layout.address_selector);//layout of the dialog
+            selectorDialog.setContentView(R.layout.layout_address_selector);//layout of the dialog
 
             Window window = selectorDialog.getWindow();
             window.setGravity(Gravity.CENTER);//location -- center

@@ -3,4 +3,6 @@
 
     <string name="text_cancel">Cancel</string>
     <string name="text_confirn">Confirm</string>
+
+    <string name="weather_temp">%s℃</string>
 </resources>

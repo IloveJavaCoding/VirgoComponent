@@ -15,14 +15,8 @@ import android.widget.OverScroller;
 
 import androidx.annotation.Nullable;
 
-
 import com.nepalese.virgocomponent.R;
 import com.nepalese.virgocomponent.common.CommonUtil;
-import com.nepalese.virgocomponent.component.event.BookSentTotalLineEvent;
-import com.nepalese.virgocomponent.component.event.BookViewClickEvent;
-import com.nepalese.virgocomponent.component.event.BookViewRefreshTagEvent;
-
-import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,6 +33,8 @@ import java.util.regex.Pattern;
 public class VirgoBookView extends View {
     private static final String TAG = "VirgoBookView";
     private Paint paint;
+    private BookCallBack callBack;
+
     private int viewWidth;
     //viewHeight: the height of view displayed; viewHeightAll: the real height of bookView;
     private int viewHeight;
@@ -88,11 +84,11 @@ public class VirgoBookView extends View {
     private void init(Context context, AttributeSet attrs) {
         // 解析自定义属性
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.VirgoBookView);
-        textSize = ta.getDimension(R.styleable.VirgoBookView_bookTextSize, 18.0f);
-        textColor = ta.getColor(R.styleable.VirgoBookView_bookTextColor, 0xff000000);
-        bgColor = ta.getColor(R.styleable.VirgoBookView_bgColor, 0xffe3edcd);
-        dividerHeight = ta.getDimension(R.styleable.VirgoBookView_bookDividerHeight, 10.0f);
-        padValue = ta.getDimension(R.styleable.VirgoBookView_padValue, 15.0f);
+        textSize = ta.getDimension(R.styleable.VirgoBookView_vbookTextSize, 18.0f);
+        textColor = ta.getColor(R.styleable.VirgoBookView_vbookTextColor, 0xff000000);
+        bgColor = ta.getColor(R.styleable.VirgoBookView_vbookBgColor, 0xffe3edcd);
+        dividerHeight = ta.getDimension(R.styleable.VirgoBookView_vbookDividerHeight, 10.0f);
+        padValue = ta.getDimension(R.styleable.VirgoBookView_vbookPadValue, 15.0f);
         ta.recycle();
         // </end>
 
@@ -265,14 +261,14 @@ public class VirgoBookView extends View {
                 if(Math.abs(x-startX)<10 && Math.abs(y-startY)<10){
                     //click
                     Log.d(TAG, "click......" + isShow);
-                    postEvent(new BookViewClickEvent(isShow));
+                    callBack.onViewClick(isShow);
                     isShow = !isShow;
                 }
                 else{
                     if(readMode==MODE_PAGE){
                         flashPage(x);
                         //save tag
-                       postEvent(new BookViewRefreshTagEvent(firstIndex));
+                        callBack.onTagFresh(firstIndex);
                     }
                     else{
                         //slip mode
@@ -288,7 +284,7 @@ public class VirgoBookView extends View {
                             Log.i(TAG, "slow slip velocity: " + velocityY);
                         }
                         recycleVelocityTracker();
-                        postEvent(new BookViewRefreshTagEvent(getCurLines()));
+                        callBack.onTagFresh(getCurLines());
                     }
                 }
                 break;
@@ -356,6 +352,15 @@ public class VirgoBookView extends View {
         }
         invalidate();
     }
+
+    public interface BookCallBack{
+        void onTotalLine(int allLine);
+
+        void onViewClick(boolean isShow);
+
+        void onTagFresh(int tag);
+    }
+    ///////////////////////////////////////////////////////////////////////////////////
 
     public void setTag(int tag){
         Log.i(TAG, "tag: " + tag);
@@ -479,10 +484,10 @@ public class VirgoBookView extends View {
 
         Log.d(TAG, "lines size: " + lines.size());
         totalRows = lines.size();
-        postEvent(new BookSentTotalLineEvent(totalRows));
+        callBack.onTotalLine(totalRows);
     }
 
-    private void postEvent(Object object){
-        EventBus.getDefault().post(object);
+    public void setCallBack(BookCallBack callBack) {
+        this.callBack = callBack;
     }
 }

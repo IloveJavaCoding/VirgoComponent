@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -19,9 +20,6 @@ import androidx.annotation.Nullable;
 
 import com.nepalese.virgocomponent.R;
 import com.nepalese.virgocomponent.common.CommonUtil;
-import com.nepalese.virgocomponent.component.event.LrcViewRefreshLineEvent;
-
-import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -36,31 +34,42 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author nepalese on 2021/03/09 16:20
+ * @usage 通过滚动画布实现歌词滚动
+ */
 public class VirgoLrcView extends View {
     private static final String TAG = "VirgoLrcView";
+    private static final int MSG_TOUCH_BORDER = 1;//滑到底部或顶部
+    private static final String DEFAULT_TEXT = "暂无歌词，快去下载吧！";
+
     private Context context;
+    private LrcCallback callback;//滑动歌词时间线回调
 
-    private Paint mainPaint, secPaint;
-    private int viewWidth;
-    private int viewHeight;
-    private float totalHeight;
+    private Paint mainPaint;//当前歌词画笔
+    private Paint secPaint;//其他歌词画笔
+    private int viewWidth;//显示宽度
+    private int viewHeight;//显示高度
+    private float totalHeight;//歌词总高度
 
-    //lrc lines
-    private List<MyLrcLine> lineList = new LinkedList<>();
-    private int curLine = 0;
-    private long nextTime = 0;
+    private float textSizeMain;//选中字体大小
+    private float textSizeSec;//其他字体大小
+    private float textMainHeight;
+    private float centerY;
+    private int textColorMain;//选中字体颜色
+    private int textColorSec;//其他字体颜色
 
-    //attrs of text px
-    private float textSizeMain, textSizeSec;
-    private int textColorMain, textColorSec;
+    private int curLine = 0;//当前行数
     private float dividerHeight;//行间距
-    private float padValue;//padding
+    private float padValue;//两边缩进值
+    private long nextTime = 0;//下一行时间线
 
     private boolean isPlaying = false;
-    private boolean isDown = false;
-    private Bitmap background;
+    private boolean isDown = false;//按压界面
+
+    private Bitmap background;//背景图
     private OverScroller scroller;
-    private static final String DEFAULT_TEXT = "暂无歌词，快去下载吧！";
+    private final List<MyLrcLine> lineList = new LinkedList<>();
 
     public VirgoLrcView(Context context) {
         this(context, null);
@@ -79,13 +88,13 @@ public class VirgoLrcView extends View {
     private void init(Context context, AttributeSet attrs) {
         // 解析自定义属性
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.VirgoLrcView);
-        textSizeMain = ta.getDimension(R.styleable.VirgoLrcView_lrcTextSizeMain, 25.0f);
-        textSizeSec = ta.getDimension(R.styleable.VirgoLrcView_lrcTextSizeSec, 15.0f);
-        textColorMain = ta.getColor(R.styleable.VirgoLrcView_lrcTextColorMain, 0xff66ccff);
-        textColorSec = ta.getColor(R.styleable.VirgoLrcView_lrcTextColorSec, 0xff8a8a8a);
+        textSizeMain = ta.getDimension(R.styleable.VirgoLrcView_vlrcTextSizeMain, 25.0f);
+        textSizeSec = ta.getDimension(R.styleable.VirgoLrcView_vlrcTextSizeSec, 15.0f);
+        textColorMain = ta.getColor(R.styleable.VirgoLrcView_vlrcTextColorMain, 0x66ccff);
+        textColorSec = ta.getColor(R.styleable.VirgoLrcView_vlrcTextColorSec, 0x8a8a8a);
 
-        dividerHeight = ta.getDimension(R.styleable.VirgoLrcView_lrcDividerHeight, 15.0f);
-        padValue = ta.getDimension(R.styleable.VirgoLrcView_lrcpadValue, 25.0f);
+        dividerHeight = ta.getDimension(R.styleable.VirgoLrcView_vlrcDividerHeight, 15.0f);
+        padValue = ta.getDimension(R.styleable.VirgoLrcView_vlrcpadValue, 25.0f);
         ta.recycle();
         // </end>
 
@@ -101,18 +110,25 @@ public class VirgoLrcView extends View {
         secPaint.setAntiAlias(true);
 
         scroller = new OverScroller(context);
+
+        Paint.FontMetrics fm = mainPaint.getFontMetrics();
+        textMainHeight = (fm.descent - fm.ascent);
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         viewWidth = getWidth();
         viewHeight = getHeight();
-        calculateRows();
+        //显示页内中心y轴坐标
+        centerY = (viewHeight - textMainHeight) / 2.0f;
+
+        calculateHeight();
         scaleBackground();
         super.onLayout(changed, left, top, right, bottom);
     }
 
-    private void calculateRows() {
+    //计算歌词需要高度
+    private void calculateHeight() {
         totalHeight = (textSizeSec+dividerHeight)*lineList.size();
     }
 
@@ -131,8 +147,7 @@ public class VirgoLrcView extends View {
             canvas.drawColor(Color.TRANSPARENT);
         }
 
-        float centerY = (viewHeight - textSizeMain) / 2.0f;
-        //draw when have no lrc
+        //提示无歌词
         if (lineList.isEmpty()) {
             canvas.drawText(DEFAULT_TEXT, getStartX(DEFAULT_TEXT, mainPaint), centerY, mainPaint);
             return;
@@ -140,15 +155,18 @@ public class VirgoLrcView extends View {
 
         //画选择线
         if(isPlaying && isDown){
-            float baseLine = centerY+getScrollY();
+            float baseLine = centerY + getScrollY();
             canvas.drawLine(padValue, baseLine, viewWidth-padValue, baseLine, mainPaint);
         }
 
         for(int i=0; i<lineList.size(); i++){
             if(curLine==i){
-                canvas.drawText(lineList.get(i).lrc, getStartX(lineList.get(i).lrc, mainPaint), centerY + i * (textSizeSec+dividerHeight), mainPaint);
+                //选中行
+                canvas.drawText(lineList.get(i).lrc, getStartX(lineList.get(i).lrc, mainPaint),
+                        centerY + i * (textSizeSec+dividerHeight), mainPaint);
             }else{
-                canvas.drawText(lineList.get(i).lrc, getStartX(lineList.get(i).lrc, secPaint), centerY + i * (textSizeSec+dividerHeight), secPaint);
+                canvas.drawText(lineList.get(i).lrc, getStartX(lineList.get(i).lrc, secPaint),
+                        centerY + i * (textSizeSec+dividerHeight), secPaint);
             }
         }
 
@@ -178,7 +196,7 @@ public class VirgoLrcView extends View {
             case MotionEvent.ACTION_MOVE:
                 Log.i(TAG, "scrollY: " + getScrollY());
                 if(getScrollY()>totalHeight || getScrollY()<(-viewHeight/3)){
-                    handler.sendEmptyMessage(0);
+                    handler.sendEmptyMessage(MSG_TOUCH_BORDER);
                     return true;
                 }
                 y = event.getY();
@@ -201,12 +219,15 @@ public class VirgoLrcView extends View {
         return true;
     }
 
+    //计算滑动后当前居中的行
     private void calculateCurLine(float y) {
         float offLine = ((Math.abs(y)-textSizeSec) / (textSizeSec + dividerHeight)) * 1.0f;
         Log.i(TAG, "off line: " + offLine);
         if(y>0){
+            //上划
             curLine = (int) (curLine + offLine + 1);
         }else{
+            //下拉
             curLine = (int) (curLine - offLine - 1);
         }
 
@@ -215,14 +236,16 @@ public class VirgoLrcView extends View {
         }else if(curLine<0){
             curLine = 0;
         }
+
         //跳到前面时需要
         if(y<0){
             nextTime = lineList.get(curLine+1).getTime();
         }
 
+        //返回当前行对应的时间线
         if(curLine<lineList.size()-1){
             long time = lineList.get(curLine).getTime();
-            EventBus.getDefault().post(new LrcViewRefreshLineEvent(time));
+            callback.onRefresh(time);
         }
     }
 
@@ -245,13 +268,15 @@ public class VirgoLrcView extends View {
         }
     }
 
-    private Handler handler = new Handler(){
+    private final Handler handler = new Handler(Looper.myLooper()){
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if(msg.what == 0) {
-                scrollTo(0, (int) (curLine * (textSizeSec + dividerHeight)));
-                setScrollY((int)(curLine*(textSizeSec+dividerHeight)));
+            if(msg.what == MSG_TOUCH_BORDER) {
+                //回到当前行
+                int curY = (int) (curLine * (textSizeSec + dividerHeight));
+                scrollTo(0, curY);
+                setScrollY(curY);
                 scroller.abortAnimation();
                 scroller = null;
                 scroller = new OverScroller(context);
@@ -260,17 +285,9 @@ public class VirgoLrcView extends View {
         }
     };
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-    }
-
+    //计算使文字居中
     private float getStartX(String str, Paint paint){
         return (viewWidth - paint.measureText(str)) / 2.0f;
-    }
-
-    public void setBackground(Bitmap background) {
-        this.background = CommonUtil.blurBitmap(background, 200);
     }
 
     private void reset(){
@@ -279,54 +296,6 @@ public class VirgoLrcView extends View {
         nextTime = 0;
         if(scroller.isFinished()){
             scroller.abortAnimation();
-        }
-    }
-
-    public void loopMode(){
-        curLine = 0;
-        nextTime = 0;
-        scrollTo(0,0);
-        scroller.abortAnimation();
-        scroller = null;
-        scroller = new OverScroller(context);
-    }
-
-    public void setPlaying(boolean playing) {
-        isPlaying = playing;
-    }
-
-    public void setLrc(String lrc) {
-        reset();
-        if (TextUtils.isEmpty(lrc)) { return;}
-        parseLrc(new InputStreamReader(new ByteArrayInputStream(lrc.getBytes())));
-    }
-
-    public void setLrcFile(String path){
-        File file = new File(path);
-        if(file.exists()){
-            reset();
-            String format;
-            if(CommonUtil.isUtf8(file)){
-                format = "UTF-8";
-            }else{//utf_8
-                format = "GBK";
-            }
-
-            FileInputStream inputStream = null;
-            try {
-                inputStream = new FileInputStream(file);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            InputStreamReader inputStreamReader = null;//'utf-8' 'GBK'
-            try {
-                inputStreamReader = new InputStreamReader(inputStream, format);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-
-            parseLrc(inputStreamReader);
         }
     }
 
@@ -340,33 +309,6 @@ public class VirgoLrcView extends View {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public void seekTo(long time){
-        if(time<lineList.get(curLine).getTime()){//往回跳
-            //
-        }else if(time<nextTime){
-            return;
-        }
-
-        for(int i=0; i<lineList.size(); i++){
-            if(i<lineList.size()-1){
-                if(time>=lineList.get(i).getTime() && time<lineList.get(i+1).getTime()){
-                    int temp = i - curLine;
-                    curLine = i;
-                    nextTime = lineList.get(i+1).getTime();
-                    scroller.startScroll(scroller.getFinalX(), scroller.getFinalY(), 0,  (int)(textSizeSec+dividerHeight)*temp);
-                    invalidate();
-                    break;
-                }
-            }else{//last line
-                int temp = i - curLine;
-                curLine = i;
-                nextTime = lineList.get(i).getTime() + 60000;
-                scroller.startScroll(scroller.getFinalX(), scroller.getFinalY(), 0,  (int)(textSizeSec+dividerHeight)*temp);
-                invalidate();
-            }
         }
     }
 
@@ -408,33 +350,121 @@ public class VirgoLrcView extends View {
         String[] result = line.split("]");
         lineList.add(new MyLrcLine(parseTime(result[0]), result[1]));
     }
-}
 
-class MyLrcLine {
-    long time;
-    String lrc;
-
-    public MyLrcLine(long time, String lrc) {
-        this.time = time;
-        this.lrc = lrc;
+    /////////////////////////////////////////////api///////////////////////////////////
+    public void setBackground(Bitmap background) {
+        this.background = CommonUtil.blurBitmap(background, 200);
     }
 
-    public MyLrcLine() {
+    public void loopMode(){
+        curLine = 0;
+        nextTime = 0;
+        scrollTo(0,0);
+        scroller.abortAnimation();
+        scroller = null;
+        scroller = new OverScroller(context);
     }
 
-    public long getTime() {
-        return time;
-    }
-
-    public void setTime(long time) {
-        this.time = time;
-    }
-
-    public String getLrc() {
-        return lrc;
+    public void setPlaying(boolean playing) {
+        isPlaying = playing;
     }
 
     public void setLrc(String lrc) {
-        this.lrc = lrc;
+        reset();
+        if (TextUtils.isEmpty(lrc)) { return;}
+        parseLrc(new InputStreamReader(new ByteArrayInputStream(lrc.getBytes())));
+    }
+
+    public void setLrcFile(String path){
+        File file = new File(path);
+        if(file.exists()){
+            reset();
+            String format;
+            if(CommonUtil.isUtf8(file)){
+                format = "UTF-8";
+            }else{
+                format = "GBK";
+            }
+
+            FileInputStream inputStream = null;
+            try {
+                inputStream = new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            InputStreamReader inputStreamReader = null;//'utf-8' 'GBK'
+            try {
+                inputStreamReader = new InputStreamReader(inputStream, format);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+
+            parseLrc(inputStreamReader);
+        }
+    }
+
+    public void seekTo(long time){
+        if(time<lineList.get(curLine).getTime()){//往回跳
+            //
+        }else if(time<nextTime){
+            return;
+        }
+
+        for(int i=0; i<lineList.size(); i++){
+            if(i<lineList.size()-1){
+                if(time>=lineList.get(i).getTime() && time<lineList.get(i+1).getTime()){
+                    int temp = i - curLine;
+                    curLine = i;
+                    nextTime = lineList.get(i+1).getTime();
+                    scroller.startScroll(scroller.getFinalX(), scroller.getFinalY(), 0,  (int)(textSizeSec+dividerHeight)*temp);
+                    invalidate();
+                    break;
+                }
+            }else{//last line
+                int temp = i - curLine;
+                curLine = i;
+                nextTime = lineList.get(i).getTime() + 60000;
+                scroller.startScroll(scroller.getFinalX(), scroller.getFinalY(), 0,  (int)(textSizeSec+dividerHeight)*temp);
+                invalidate();
+            }
+        }
+    }
+
+    public void setCallback(LrcCallback callback) {
+        this.callback = callback;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////
+    public interface LrcCallback{
+        void onRefresh(long time);
+    }
+    static class MyLrcLine {
+        private long time;
+        private String lrc;
+
+        public MyLrcLine(long time, String lrc) {
+            this.time = time;
+            this.lrc = lrc;
+        }
+
+        public MyLrcLine() {
+        }
+
+        public long getTime() {
+            return time;
+        }
+
+        public void setTime(long time) {
+            this.time = time;
+        }
+
+        public String getLrc() {
+            return lrc;
+        }
+
+        public void setLrc(String lrc) {
+            this.lrc = lrc;
+        }
     }
 }
