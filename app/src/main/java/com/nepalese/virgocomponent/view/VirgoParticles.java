@@ -9,7 +9,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -182,7 +181,6 @@ public class VirgoParticles extends View {
         //需新生成个数
         int mNewNum = 0;
         clearDot.clear();
-        Log.i(TAG, "moveDot: dot num= " + listDot.size());
         for(VirgoPoint2 p: listDot){
             p.setX((float) (p.getX()+mMoveSpace*Math.cos(p.getOffset()*Math.PI/18f)));
             p.setY((float) (p.getY()-mMoveSpace*Math.sin(p.getOffset()*Math.PI/18f)));
